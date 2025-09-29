@@ -1,0 +1,17 @@
+name: flame_game_demo
+description: A Flutter + Flame game project.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flame: ^1.17.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/player.png
