@@ -54,6 +54,7 @@ class MyGame extends FlameGame
   late TextComponent livesText;
   late TextComponent levelText;
   late TextComponent gameOverText;
+
   final double baseSpeed = 200;
   int score = 0;
   int lives = 3;
@@ -64,6 +65,7 @@ class MyGame extends FlameGame
   bool invincible = false;
   double invincibleTimer = 0;
   bool isPaused = false;
+  bool bossActive = false;
 
   @override
   Future<void> onLoad() async {
@@ -78,11 +80,12 @@ class MyGame extends FlameGame
     invincible = false;
     isGameOver = false;
     isPaused = false;
+    bossActive = false;
     children.clear();
 
     addPlayer();
     addHUD();
-    spawnObstacles(level + 2); // Level 1 starts with 3 obstacles
+    spawnWave();
     spawnPowerUp();
   }
 
@@ -138,6 +141,18 @@ class MyGame extends FlameGame
     );
   }
 
+  void spawnWave() {
+    children.whereType<MovingObstacle>().forEach((c) => c.removeFromParent());
+    children.whereType<Boss>().forEach((c) => c.removeFromParent());
+    bossActive = false;
+
+    if (level % 5 == 0) {
+      spawnBoss();
+    } else {
+      spawnObstacles(level + 2);
+    }
+  }
+
   void spawnObstacles(int count) async {
     final obstacleSprite = await loadSprite('obstacle.png');
     for (int i = 0; i < count; i++) {
@@ -147,12 +162,26 @@ class MyGame extends FlameGame
           rng.nextDouble() * (size.x - 64),
           rng.nextDouble() * (size.y - 64),
         ),
-        speed: (100 + rng.nextInt(150)) * difficultyMultiplier,
+        speed: (120 + rng.nextInt(160)) * difficultyMultiplier,
         screenSize: size,
       );
       obstacle.add(RectangleHitbox());
       add(obstacle);
     }
+  }
+
+  void spawnBoss() async {
+    final bossSprite = await loadSprite('boss.png');
+    final boss = Boss(
+      sprite: bossSprite,
+      position: Vector2(size.x * 0.65, size.y * 0.5),
+      speed: 200 * difficultyMultiplier,
+      screenSize: size,
+      hp: 3 + (level ~/ 5), // scale HP by stage
+    );
+    boss.add(RectangleHitbox());
+    add(boss);
+    bossActive = true;
   }
 
   void spawnPowerUp() async {
@@ -179,8 +208,15 @@ class MyGame extends FlameGame
       }
     }
 
-    // Advance level if score threshold reached
-    if (score >= level * 5) {
+    // Advance level if all enemies cleared (no MovingObstacle and no Boss active)
+    if (!bossActive && children.whereType<MovingObstacle>().isEmpty) {
+      nextLevel();
+    }
+    if (bossActive && children.whereType<Boss>().isEmpty) {
+      // Boss defeated
+      score += 2;
+      lives += 2;
+      livesText.text = 'Lives: $lives';
       nextLevel();
     }
   }
@@ -189,7 +225,7 @@ class MyGame extends FlameGame
     level += 1;
     levelText.text = 'Level: $level';
     difficultyMultiplier += 0.3;
-    spawnObstacles(level + 2);
+    spawnWave();
   }
 
   void pauseGame() {
@@ -211,12 +247,21 @@ class MyGame extends FlameGame
       scoreText.text = 'Score: $score';
       lives -= 1;
       livesText.text = 'Lives: $lives';
-
+      resetPlayer();
+    } else if (other is Boss) {
+      if (invincible) return;
+      // Hitting boss reduces its HP; player also loses a life
+      other.hp -= 1;
+      lives -= 1;
+      livesText.text = 'Lives: $lives';
       if (lives <= 0) {
         triggerGameOver();
-      } else {
-        resetGame();
       }
+      if (other.hp <= 0) {
+        other.removeFromParent();
+        bossActive = false;
+      }
+      resetPlayer();
     } else if (other is PowerUp) {
       if (other.type == PowerUpType.extraLife) {
         lives += 1;
@@ -235,11 +280,18 @@ class MyGame extends FlameGame
     add(gameOverText);
   }
 
-  void resetGame() {
+  void resetPlayer() {
     player.x = size.x / 4;
     player.y = size.y / 2;
-    children.whereType<MovingObstacle>().forEach((c) => c.removeFromParent());
-    spawnObstacles(level + 2);
+  }
+
+  @override
+  bool onTapDown(TapDownInfo info) {
+    if (isGameOver) {
+      // restart
+      startGame();
+    }
+    return super.onTapDown(info);
   }
 
   @override
@@ -271,7 +323,6 @@ class PlayerController extends Component with HasGameRef<MyGame> {
   final SpriteComponent player;
   final JoystickComponent joystick;
   final double Function() speedProvider;
-
   PlayerController(this.player, this.joystick, this.speedProvider);
 
   @override
@@ -302,13 +353,34 @@ class MovingObstacle extends SpriteComponent with CollisionCallbacks {
   void update(double dt) {
     super.update(dt);
     position += direction * speed * dt;
+    if (x < 0 || x + width > screenSize.x) direction.x *= -1;
+    if (y < 0 || y + height > screenSize.y) direction.y *= -1;
+  }
+}
 
-    if (x < 0 || x + width > screenSize.x) {
-      direction.x *= -1;
-    }
-    if (y < 0 || y + height > screenSize.y) {
-      direction.y *= -1;
-    }
+class Boss extends SpriteComponent with CollisionCallbacks {
+  final double speed;
+  final Vector2 screenSize;
+  int hp;
+  Vector2 direction = Vector2.zero();
+  final Random rng = Random();
+
+  Boss({
+    required Sprite sprite,
+    required Vector2 position,
+    required this.speed,
+    required this.screenSize,
+    required this.hp,
+  }) : super(sprite: sprite, position: position, size: Vector2(120, 120)) {
+    direction = Vector2(rng.nextDouble() * 2 - 1, rng.nextDouble() * 2 - 1).normalized();
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    position += direction * speed * dt;
+    if (x < 0 || x + width > screenSize.x) direction.x *= -1;
+    if (y < 0 || y + height > screenSize.y) direction.y *= -1;
   }
 }
 

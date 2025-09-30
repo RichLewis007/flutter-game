@@ -1,7 +1,7 @@
 name: flame_game_demo
-description: A Flutter + Flame v10 game demo with levels/stages and increasing waves of obstacles.
+description: A Flutter + Flame v11 game with boss fights, levels, power-ups, pause, and web support.
 publish_to: 'none'
-version: 1.0.0+10
+version: 1.0.0+11
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -17,3 +17,4 @@ flutter:
     - assets/images/player.png
     - assets/images/obstacle.png
     - assets/images/powerup.png
+    - assets/images/boss.png
