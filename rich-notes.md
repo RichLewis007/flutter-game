@@ -3,6 +3,7 @@ flutter pub outdated
 flutter pub upgrade
 flutter run
 
+flutter run -d macos
 
 ---
 
