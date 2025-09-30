@@ -15,8 +15,9 @@ class MyGame extends FlameGame
     with HasCollisionDetection, KeyboardEvents, HasDraggables, HasTappables {
   late SpriteComponent player;
   late TextComponent scoreText;
-  final double speed = 200;
+  final double baseSpeed = 200;
   int score = 0;
+  double difficultyMultiplier = 1.0;
   final Random rng = Random();
 
   @override
@@ -46,7 +47,7 @@ class MyGame extends FlameGame
       margin: const EdgeInsets.only(left: 40, bottom: 40),
     );
     add(joystick);
-    add(PlayerController(player, joystick));
+    add(PlayerController(player, joystick, () => baseSpeed * difficultyMultiplier));
 
     spawnObstacles(3);
   }
@@ -54,11 +55,15 @@ class MyGame extends FlameGame
   void spawnObstacles(int count) async {
     final obstacleSprite = await loadSprite('obstacle.png');
     for (int i = 0; i < count; i++) {
-      final obstacle = SpriteComponent()
-        ..sprite = obstacleSprite
-        ..size = Vector2(64, 64)
-        ..x = rng.nextDouble() * (size.x - 64)
-        ..y = rng.nextDouble() * (size.y - 64);
+      final obstacle = MovingObstacle(
+        sprite: obstacleSprite,
+        position: Vector2(
+          rng.nextDouble() * (size.x - 64),
+          rng.nextDouble() * (size.y - 64),
+        ),
+        speed: (100 + rng.nextInt(150)) * difficultyMultiplier,
+        screenSize: size,
+      );
       obstacle.add(RectangleHitbox());
       add(obstacle);
     }
@@ -66,9 +71,10 @@ class MyGame extends FlameGame
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    if (other is SpriteComponent && other != player) {
+    if (other is MovingObstacle) {
       score += 1;
       scoreText.text = 'Score: $score';
+      difficultyMultiplier += 0.2; // increase difficulty
       resetGame();
     }
   }
@@ -76,9 +82,9 @@ class MyGame extends FlameGame
   void resetGame() {
     player.x = size.x / 4;
     player.y = size.y / 2;
-    // Remove all existing obstacles and respawn new ones
-    children.whereType<SpriteComponent>().where((c) => c != player).forEach((c) => c.removeFromParent());
-    spawnObstacles(3 + rng.nextInt(3)); // Increase difficulty with 3-5 obstacles
+    // Remove obstacles and respawn more with higher speed
+    children.whereType<MovingObstacle>().forEach((c) => c.removeFromParent());
+    spawnObstacles(3 + rng.nextInt(3)); // 3-5 moving obstacles
   }
 
   @override
@@ -102,14 +108,45 @@ class MyGame extends FlameGame
 class PlayerController extends Component with HasGameRef<MyGame> {
   final SpriteComponent player;
   final JoystickComponent joystick;
+  final double Function() speedProvider;
 
-  PlayerController(this.player, this.joystick);
+  PlayerController(this.player, this.joystick, this.speedProvider);
 
   @override
   void update(double dt) {
     super.update(dt);
     if (joystick.direction != JoystickDirection.idle) {
-      player.position.add(joystick.relativeDelta * 200 * dt);
+      player.position.add(joystick.relativeDelta * speedProvider() * dt);
+    }
+  }
+}
+
+class MovingObstacle extends SpriteComponent with CollisionCallbacks {
+  final double speed;
+  final Vector2 screenSize;
+  Vector2 direction = Vector2.zero();
+  final Random rng = Random();
+
+  MovingObstacle({
+    required Sprite sprite,
+    required Vector2 position,
+    required this.speed,
+    required this.screenSize,
+  }) : super(sprite: sprite, position: position, size: Vector2(64, 64)) {
+    direction = Vector2(rng.nextDouble() * 2 - 1, rng.nextDouble() * 2 - 1).normalized();
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    position += direction * speed * dt;
+
+    // Bounce off screen edges
+    if (x < 0 || x + width > screenSize.x) {
+      direction.x *= -1;
+    }
+    if (y < 0 || y + height > screenSize.y) {
+      direction.y *= -1;
     }
   }
 }
