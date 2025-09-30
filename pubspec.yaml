@@ -1,7 +1,7 @@
 name: flame_game_demo
-description: A Flutter + Flame game project.
+description: A Flutter + Flame v06 game demo with random moving obstacles and progressive difficulty.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+6
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -9,9 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flame: ^1.17.0
+  flame: ^1.32.0
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/player.png
+    - assets/images/obstacle.png

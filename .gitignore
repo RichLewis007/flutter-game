@@ -1,6 +1,7 @@
 temp/
 rich-notes.md
 *.sh
+.current-branch
 
 # Miscellaneous
 *.class
@@ -10,9 +11,11 @@ rich-notes.md
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -26,27 +29,6 @@ migrate_working_dir/
 
 # Android Studio
 *.hprof
-
-
-
-# Flutter repo-specific
-/bin/cache/
-/bin/internal/bootstrap.bat
-/bin/internal/bootstrap.sh
-/bin/mingit/
-/dev/benchmarks/mega_gallery/
-/dev/bots/.recipe_deps
-/dev/bots/android_tools/
-/dev/devicelab/ABresults*.json
-/dev/docs/doc/
-/dev/docs/flutter.docs.zip
-/dev/docs/lib/
-/dev/docs/pubspec.yaml
-/dev/integration_tests/**/xcuserdata
-/dev/integration_tests/**/Pods
-/packages/flutter/coverage/
-version
-analysis_benchmark.json
 
 # packages file containing multi-root paths
 .packages.generated
