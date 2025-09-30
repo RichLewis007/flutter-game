@@ -1,7 +1,7 @@
 name: flame_game_demo
-description: A Flutter + Flame v07 game demo with lives, health, and game over screen.
+description: A Flutter + Flame game demo with lives, power-ups, and game over screen.
 publish_to: 'none'
-version: 1.0.0+7
+version: 1.0.0+8
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -16,3 +16,4 @@ flutter:
   assets:
     - assets/images/player.png
     - assets/images/obstacle.png
+    - assets/images/powerup.png
