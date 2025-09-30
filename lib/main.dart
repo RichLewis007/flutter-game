@@ -11,6 +11,8 @@ void main() {
   runApp(GameWidget(game: game));
 }
 
+enum PowerUpType { extraLife, invincibility }
+
 class MyGame extends FlameGame
     with HasCollisionDetection, KeyboardEvents, HasDraggables, HasTappables {
   late SpriteComponent player;
@@ -23,6 +25,8 @@ class MyGame extends FlameGame
   double difficultyMultiplier = 1.0;
   final Random rng = Random();
   bool isGameOver = false;
+  bool invincible = false;
+  double invincibleTimer = 0;
 
   @override
   Future<void> onLoad() async {
@@ -69,6 +73,7 @@ class MyGame extends FlameGame
     add(PlayerController(player, joystick, () => baseSpeed * difficultyMultiplier));
 
     spawnObstacles(3);
+    spawnPowerUp();
   }
 
   void spawnObstacles(int count) async {
@@ -88,9 +93,33 @@ class MyGame extends FlameGame
     }
   }
 
+  void spawnPowerUp() async {
+    final powerSprite = await loadSprite('powerup.png');
+    final type = rng.nextBool() ? PowerUpType.extraLife : PowerUpType.invincibility;
+    final powerUp = PowerUp(
+      sprite: powerSprite,
+      position: Vector2(rng.nextDouble() * (size.x - 64), rng.nextDouble() * (size.y - 64)),
+      type: type,
+    );
+    powerUp.add(RectangleHitbox());
+    add(powerUp);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (invincible) {
+      invincibleTimer -= dt;
+      if (invincibleTimer <= 0) {
+        invincible = false;
+      }
+    }
+  }
+
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     if (other is MovingObstacle && !isGameOver) {
+      if (invincible) return;
       score += 1;
       lives -= 1;
       scoreText.text = 'Score: $score';
@@ -102,6 +131,17 @@ class MyGame extends FlameGame
         difficultyMultiplier += 0.2;
         resetGame();
       }
+    } else if (other is PowerUp && !isGameOver) {
+      if (other.type == PowerUpType.extraLife) {
+        lives += 1;
+      } else if (other.type == PowerUpType.invincibility) {
+        invincible = true;
+        invincibleTimer = 5.0; // 5 seconds invincible
+      }
+      livesText.text = 'Lives: $lives';
+      other.removeFromParent();
+      // spawn next power-up after some delay
+      Future.delayed(const Duration(seconds: 8), () => spawnPowerUp());
     }
   }
 
@@ -122,10 +162,12 @@ class MyGame extends FlameGame
     score = 0;
     lives = 3;
     difficultyMultiplier = 1.0;
+    invincible = false;
     scoreText.text = 'Score: 0';
     livesText.text = 'Lives: 3';
     gameOverText.removeFromParent();
     resetGame();
+    spawnPowerUp();
   }
 
   @override
@@ -197,4 +239,10 @@ class MovingObstacle extends SpriteComponent with CollisionCallbacks {
       direction.y *= -1;
     }
   }
+}
+
+class PowerUp extends SpriteComponent with CollisionCallbacks {
+  final PowerUpType type;
+  PowerUp({required Sprite sprite, required Vector2 position, required this.type})
+      : super(sprite: sprite, position: position, size: Vector2(48, 48));
 }
