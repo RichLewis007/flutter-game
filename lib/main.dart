@@ -52,10 +52,12 @@ class MyGame extends FlameGame
   late SpriteComponent player;
   late TextComponent scoreText;
   late TextComponent livesText;
+  late TextComponent levelText;
   late TextComponent gameOverText;
   final double baseSpeed = 200;
   int score = 0;
   int lives = 3;
+  int level = 1;
   double difficultyMultiplier = 1.0;
   final Random rng = Random();
   bool isGameOver = false;
@@ -71,6 +73,7 @@ class MyGame extends FlameGame
   void startGame() {
     score = 0;
     lives = 3;
+    level = 1;
     difficultyMultiplier = 1.0;
     invincible = false;
     isGameOver = false;
@@ -79,7 +82,7 @@ class MyGame extends FlameGame
 
     addPlayer();
     addHUD();
-    spawnObstacles(3);
+    spawnObstacles(level + 2); // Level 1 starts with 3 obstacles
     spawnPowerUp();
   }
 
@@ -118,6 +121,14 @@ class MyGame extends FlameGame
       textRenderer: TextPaint(style: const TextStyle(color: Colors.white, fontSize: 24)),
     );
     add(livesText);
+
+    levelText = TextComponent(
+      text: 'Level: 1',
+      position: Vector2(10, 70),
+      anchor: Anchor.topLeft,
+      textRenderer: TextPaint(style: const TextStyle(color: Colors.yellow, fontSize: 24)),
+    );
+    add(levelText);
 
     gameOverText = TextComponent(
       text: 'GAME OVER\nTap to Restart',
@@ -167,6 +178,18 @@ class MyGame extends FlameGame
         invincible = false;
       }
     }
+
+    // Advance level if score threshold reached
+    if (score >= level * 5) {
+      nextLevel();
+    }
+  }
+
+  void nextLevel() {
+    level += 1;
+    levelText.text = 'Level: $level';
+    difficultyMultiplier += 0.3;
+    spawnObstacles(level + 2);
   }
 
   void pauseGame() {
@@ -185,14 +208,13 @@ class MyGame extends FlameGame
     if (other is MovingObstacle) {
       if (invincible) return;
       score += 1;
-      lives -= 1;
       scoreText.text = 'Score: $score';
+      lives -= 1;
       livesText.text = 'Lives: $lives';
 
       if (lives <= 0) {
         triggerGameOver();
       } else {
-        difficultyMultiplier += 0.2;
         resetGame();
       }
     } else if (other is PowerUp) {
@@ -217,7 +239,7 @@ class MyGame extends FlameGame
     player.x = size.x / 4;
     player.y = size.y / 2;
     children.whereType<MovingObstacle>().forEach((c) => c.removeFromParent());
-    spawnObstacles(3 + rng.nextInt(3));
+    spawnObstacles(level + 2);
   }
 
   @override
