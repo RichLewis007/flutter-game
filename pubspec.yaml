@@ -1,7 +1,7 @@
 name: flame_game_demo
-description: A Flutter + Flame v12 game with audio (BGM + SFX), bosses, levels, power-ups, pause, and web support.
+description: A Flutter + Flame v19 game with particles, backgrounds, audio, bosses, levels, settings, leaderboard.
 publish_to: 'none'
-version: 1.0.0+12
+version: 1.0.0+19
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   flame: ^1.32.0
   flame_audio: ^2.0.0
+  shared_preferences: ^2.3.2
 
 flutter:
   uses-material-design: true
@@ -19,6 +20,12 @@ flutter:
     - assets/images/obstacle.png
     - assets/images/powerup.png
     - assets/images/boss.png
+    - assets/images/bg_forest_layer1.png
+    - assets/images/bg_forest_layer2.png
+    - assets/images/bg_cave_layer1.png
+    - assets/images/bg_cave_layer2.png
+    - assets/images/bg_space_layer1.png
+    - assets/images/bg_space_layer2.png
     - assets/audio/bgm.wav
     - assets/audio/hit.wav
     - assets/audio/powerup.wav
