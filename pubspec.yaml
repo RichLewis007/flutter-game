@@ -1,7 +1,7 @@
 name: flame_game_demo
-description: A Flutter + Flame v06 game demo with random moving obstacles and progressive difficulty.
+description: A Flutter + Flame v07 game demo with lives, health, and game over screen.
 publish_to: 'none'
-version: 1.0.0+6
+version: 1.0.0+7
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

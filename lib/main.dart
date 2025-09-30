@@ -15,10 +15,14 @@ class MyGame extends FlameGame
     with HasCollisionDetection, KeyboardEvents, HasDraggables, HasTappables {
   late SpriteComponent player;
   late TextComponent scoreText;
+  late TextComponent livesText;
+  late TextComponent gameOverText;
   final double baseSpeed = 200;
   int score = 0;
+  int lives = 3;
   double difficultyMultiplier = 1.0;
   final Random rng = Random();
+  bool isGameOver = false;
 
   @override
   Future<void> onLoad() async {
@@ -40,6 +44,21 @@ class MyGame extends FlameGame
       textRenderer: TextPaint(style: const TextStyle(color: Colors.white, fontSize: 24)),
     );
     add(scoreText);
+
+    livesText = TextComponent(
+      text: 'Lives: 3',
+      position: Vector2(10, 40),
+      anchor: Anchor.topLeft,
+      textRenderer: TextPaint(style: const TextStyle(color: Colors.white, fontSize: 24)),
+    );
+    add(livesText);
+
+    gameOverText = TextComponent(
+      text: 'GAME OVER\nTap to Restart',
+      anchor: Anchor.center,
+      position: size / 2,
+      textRenderer: TextPaint(style: const TextStyle(color: Colors.red, fontSize: 48)),
+    );
 
     final joystick = JoystickComponent(
       knob: CircleComponent(radius: 20, paint: Paint()..color = const Color(0xFF0000FF)),
@@ -71,26 +90,56 @@ class MyGame extends FlameGame
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    if (other is MovingObstacle) {
+    if (other is MovingObstacle && !isGameOver) {
       score += 1;
+      lives -= 1;
       scoreText.text = 'Score: $score';
-      difficultyMultiplier += 0.2; // increase difficulty
-      resetGame();
+      livesText.text = 'Lives: $lives';
+
+      if (lives <= 0) {
+        triggerGameOver();
+      } else {
+        difficultyMultiplier += 0.2;
+        resetGame();
+      }
     }
+  }
+
+  void triggerGameOver() {
+    isGameOver = true;
+    add(gameOverText);
   }
 
   void resetGame() {
     player.x = size.x / 4;
     player.y = size.y / 2;
-    // Remove obstacles and respawn more with higher speed
     children.whereType<MovingObstacle>().forEach((c) => c.removeFromParent());
-    spawnObstacles(3 + rng.nextInt(3)); // 3-5 moving obstacles
+    spawnObstacles(3 + rng.nextInt(3));
+  }
+
+  void restartGame() {
+    isGameOver = false;
+    score = 0;
+    lives = 3;
+    difficultyMultiplier = 1.0;
+    scoreText.text = 'Score: 0';
+    livesText.text = 'Lives: 3';
+    gameOverText.removeFromParent();
+    resetGame();
+  }
+
+  @override
+  bool onTapDown(TapDownInfo info) {
+    if (isGameOver) {
+      restartGame();
+    }
+    return super.onTapDown(info);
   }
 
   @override
   KeyEventResult onKeyEvent(
       RawKeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    if (event is RawKeyDownEvent) {
+    if (event is RawKeyDownEvent && !isGameOver) {
       if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
         player.y -= 10;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
@@ -141,7 +190,6 @@ class MovingObstacle extends SpriteComponent with CollisionCallbacks {
     super.update(dt);
     position += direction * speed * dt;
 
-    // Bounce off screen edges
     if (x < 0 || x + width > screenSize.x) {
       direction.x *= -1;
     }
