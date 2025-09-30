@@ -8,8 +8,24 @@ rich-notes.md
 *.log
 *.pyc
 *.swp
+.DS_Store
+.atom/
 .buildlog/
 .history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code related
+.vscode/
+
+# Android Studio
+*.hprof
 
 
 
@@ -44,11 +60,21 @@ analysis_benchmark.json
 .packages
 .pub-preload-cache/
 .pub/
+.pub-cache/
 build/
 flutter_*.png
 linked_*.ds
 unlinked.ds
 unlinked_spec.ds
+.fvm/
+.metadata
+
+# Web related
+*.dart.js
+*.info.json
+*.js_
+*.js.deps
+*.js.map
 
 # Android related
 **/android/**/gradle-wrapper.jar
@@ -92,11 +118,19 @@ unlinked_spec.ds
 **/ios/Runner/GeneratedPluginRegistrant.*
 
 # macOS
-**/Flutter/ephemeral/
-**/Pods/
+**/macos/**/*.mode1v3
+**/macos/**/*.mode2v3
+**/macos/**/*.moved-aside
+**/macos/**/*.pbxuser
+**/macos/**/*.perspectivev3
+**/macos/**/xcuserdata/
+**/macos/**/xcshareddata/
+**/macos/Flutter/ephemeral/
 **/macos/Flutter/GeneratedPluginRegistrant.swift
-**/macos/Flutter/ephemeral
-**/xcuserdata/
+**/macos/Pods/
+**/macos/.symlinks/
+**/macos/Runner.xcworkspace/xcuserdata/
+**/macos/Runner.xcworkspace/xcshareddata/
 
 # Windows
 **/windows/flutter/generated_plugin_registrant.cc
