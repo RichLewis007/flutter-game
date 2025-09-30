@@ -1,6 +1,7 @@
 temp/
 rich-notes.md
 *.sh
+.current-branch
 
 # Miscellaneous
 *.class
