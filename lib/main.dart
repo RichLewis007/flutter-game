@@ -3,10 +3,18 @@ import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/input.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Preload audio
+  await FlameAudio.audioCache.loadAll([
+    'bgm.wav', 'hit.wav', 'powerup.wav', 'boss_down.wav'
+  ]);
+  FlameAudio.bgm.initialize();
+
   final game = MyGame();
   runApp(GameWidget(game: game, overlayBuilderMap: {
     'MainMenu': (context, game) {
@@ -87,6 +95,10 @@ class MyGame extends FlameGame
     addHUD();
     spawnWave();
     spawnPowerUp();
+
+    // Start background music (loop)
+    FlameAudio.bgm.stop();
+    FlameAudio.bgm.play('bgm.wav', volume: 0.4);
   }
 
   void addPlayer() async {
@@ -177,7 +189,7 @@ class MyGame extends FlameGame
       position: Vector2(size.x * 0.65, size.y * 0.5),
       speed: 200 * difficultyMultiplier,
       screenSize: size,
-      hp: 3 + (level ~/ 5), // scale HP by stage
+      hp: 3 + (level ~/ 5),
     );
     boss.add(RectangleHitbox());
     add(boss);
@@ -208,7 +220,7 @@ class MyGame extends FlameGame
       }
     }
 
-    // Advance level if all enemies cleared (no MovingObstacle and no Boss active)
+    // Advance level if cleared
     if (!bossActive && children.whereType<MovingObstacle>().isEmpty) {
       nextLevel();
     }
@@ -217,6 +229,7 @@ class MyGame extends FlameGame
       score += 2;
       lives += 2;
       livesText.text = 'Lives: $lives';
+      FlameAudio.play('boss_down.wav');
       nextLevel();
     }
   }
@@ -230,11 +243,13 @@ class MyGame extends FlameGame
 
   void pauseGame() {
     isPaused = true;
+    FlameAudio.bgm.pause();
     overlays.add('PauseMenu');
   }
 
   void resumeGame() {
     isPaused = false;
+    FlameAudio.bgm.resume();
   }
 
   @override
@@ -247,13 +262,17 @@ class MyGame extends FlameGame
       scoreText.text = 'Score: $score';
       lives -= 1;
       livesText.text = 'Lives: $lives';
+      FlameAudio.play('hit.wav');
       resetPlayer();
+      if (lives <= 0) {
+        triggerGameOver();
+      }
     } else if (other is Boss) {
       if (invincible) return;
-      // Hitting boss reduces its HP; player also loses a life
       other.hp -= 1;
       lives -= 1;
       livesText.text = 'Lives: $lives';
+      FlameAudio.play('hit.wav');
       if (lives <= 0) {
         triggerGameOver();
       }
@@ -270,6 +289,7 @@ class MyGame extends FlameGame
         invincibleTimer = 5.0;
       }
       livesText.text = 'Lives: $lives';
+      FlameAudio.play('powerup.wav');
       other.removeFromParent();
       Future.delayed(const Duration(seconds: 8), () => spawnPowerUp());
     }
@@ -277,6 +297,7 @@ class MyGame extends FlameGame
 
   void triggerGameOver() {
     isGameOver = true;
+    FlameAudio.bgm.stop();
     add(gameOverText);
   }
 
@@ -288,7 +309,6 @@ class MyGame extends FlameGame
   @override
   bool onTapDown(TapDownInfo info) {
     if (isGameOver) {
-      // restart
       startGame();
     }
     return super.onTapDown(info);
