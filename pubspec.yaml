@@ -1,7 +1,7 @@
 name: flame_game_demo
-description: A Flutter + Flame game demo with lives, power-ups, and game over screen.
+description: A Flutter + Flame v09 game demo with main menu and pause/resume system.
 publish_to: 'none'
-version: 1.0.0+8
+version: 1.0.0+9
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
