@@ -1,3 +1,3 @@
-# flame_game_demo
+# Flitter Flame Game
 
 Under active development.
